@@ -2,6 +2,19 @@
 
 <#-- Define services -->
 <#assign expandoValueLocalService = serviceLocator.findService("com.liferay.expando.kernel.service.ExpandoValueLocalService") />
+<#assign layoutLocalService = serviceLocator.findService("com.liferay.portal.kernel.service.LayoutLocalService") />
+
+<#-- Define some variables -->
+<#assign scopeGroupId = getterUtil.getLong(request['theme-display']['scope-group-id']) />
+<#assign scopePlid = getterUtil.getLong(request['theme-display']['plid']) />
+<#assign isPrivateLayout = false />
+
+<#assign scopeLayout = "" />
+
+<#if scopePlid ? has_content>
+	<#assign scopeLayout = layoutLocalService.getLayout(scopePlid)! />
+	<#assign isPrivateLayout = scopeLayout.isPrivateLayout() />
+</#if>
 
 <#if navigationItems.siblings?size gt 0>
 	<nav class="block-navigation">
@@ -20,6 +33,20 @@
             <#assign linkUrl = navigationItem.getFriendlyUrl() />
             <#assign linkText = navigationItem.getName() />
             <#assign iconClass = "" />
+
+						<#assign linkLayout = getLayout(navigationItem isPrivateLayout scopeGroupId) />
+
+						<#if linkLayout ? has_content>
+							<#assign linkText = linkLayout.getName(locale) />
+							<#-- Below is not working. Fetch with expandoValueLocalService instead -->
+							<#--
+							<#assign expBridge = linkLayout.getExpandoBridge()! />
+							<#if expBridge ? has_content>
+								<#assign iconClass = expBridge.getAttribute("gb-icon-class")?string />
+							</#if>
+							-->
+						</#if>
+
             <#-- Still bug with getting plid from link-to-page waiting for fix -->
           </#if>
         </#if>
@@ -46,6 +73,15 @@
     </ul>
 	</nav>
 </#if>
+
+<#function getLayout linkToPage isPrivateLayout scopeGroupId>
+
+	<#local layout = layoutLocalService.getLayout(scopeGroupId, isPrivateLayout, getterUtil.getLong(linkToPage.data))! />
+
+
+	<#return layout />
+
+</#function>
 
 <#--
 <#function getMainNavHotkey linkToPage>
