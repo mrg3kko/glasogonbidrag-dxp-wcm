@@ -16,6 +16,7 @@
 	<#assign isPrivateLayout = scopeLayout.isPrivateLayout() />
 </#if>
 
+
 <#if navigationItems.siblings?size gt 0>
 	<nav class="block-navigation">
     <ul>
@@ -34,20 +35,22 @@
             <#assign linkText = navigationItem.getName() />
             <#assign iconClass = "" />
 
-						<#assign linkLayout = getLayout(navigationItem isPrivateLayout scopeGroupId) />
+						<#assign linkLayout = getLayout(navigationItem) />
+
 
 						<#if linkLayout ? has_content>
+							<#-- linkText should be avaiable through navigationItem.getName() but this seems not to be working -->
 							<#assign linkText = linkLayout.getName(locale) />
-							<#-- Below is not working. Fetch with expandoValueLocalService instead -->
-							<#--
-							<#assign expBridge = linkLayout.getExpandoBridge()! />
-							<#if expBridge ? has_content>
-								<#assign iconClass = expBridge.getAttribute("gb-icon-class")?string />
-							</#if>
-							-->
+
+
+							<#assign iconClass = "" />
+					    <#assign iconClassExpando  = expandoValueLocalService.getValue(companyId, "com.liferay.portal.kernel.model.Layout", "CUSTOM_FIELDS", "icon-class", linkLayout.getPlid())! />
+					    <#if iconClassExpando?has_content>
+					      <#assign iconClass = iconClass + "block-nav-icon block-nav-icon-" + iconClassExpando.getData() />
+					    </#if>
+
 						</#if>
 
-            <#-- Still bug with getting plid from link-to-page waiting for fix -->
           </#if>
         </#if>
 
@@ -57,11 +60,12 @@
         </#if>
 
         <#--
+				-->
 		    <#assign hotkey = getMainNavHotkey(navigationItem) />
 				<#if hotkey?has_content>
 					<#assign linkText = linkText + " (" + hotkey + ")" />
 				</#if>
-        -->
+
 
         <li class="${iconClass}">
           <a href="${linkUrl}" target="${linkTarget}">
@@ -74,16 +78,30 @@
 	</nav>
 </#if>
 
-<#function getLayout linkToPage isPrivateLayout scopeGroupId>
+<#function getLayout linkToPage>
 
-	<#local layout = layoutLocalService.getLayout(scopeGroupId, isPrivateLayout, getterUtil.getLong(linkToPage.data))! />
+	<#local linkInfo = [] />
+	<#local layout = "" />
 
+	<#if linkToPage.data?has_content>
+		<#local linkData = linkToPage.data?split("@") />
+		<#local linkLayoutId =  getterUtil.getLong(linkData[0]) />
+
+		<#local linkLayoutIsPrivate =  false />
+		<#if linkData[1] == "private-group">
+  		<#local linkLayoutIsPrivate = true />
+  	</#if>
+
+		<#local linkLayoutGroupId = getterUtil.getLong(linkData[2]) />
+
+		<#local layout = layoutLocalService.getLayout(linkLayoutGroupId, linkLayoutIsPrivate, linkLayoutId) />
+
+	</#if>
 
 	<#return layout />
 
 </#function>
 
-<#--
 <#function getMainNavHotkey linkToPage>
 
 	<#local hotkey = "" />
@@ -102,7 +120,7 @@
 
 		<#local linkLayout = layoutLocalService.getLayout(linkLayoutGroupId, linkLayoutIsPrivate, linkLayoutId) />
 
-		<#local hotkeyExpando  = expandoValueLocalService.getValue(companyId, "com.liferay.portal.model.Layout", "CUSTOM_FIELDS", "hotkey", linkLayout.getPlid())! />a
+		<#local hotkeyExpando  = expandoValueLocalService.getValue(companyId, "com.liferay.portal.kernel.model.Layout", "CUSTOM_FIELDS", "hotkey", linkLayout.getPlid())! />a
 
 		<#if hotkeyExpando?has_content>
 			<#local hotkey = hotkeyExpando.getData() />
@@ -112,4 +130,3 @@
 
 	<#return hotkey />
 </#function>
--->
