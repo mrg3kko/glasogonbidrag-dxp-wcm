@@ -17,7 +17,6 @@
 				<#if navigationItem.data ? has_content>
 					<#assign linkUrl = navigationItem.getFriendlyUrl() />
 					<#assign linkText = navigationItem.getName() />
-					<#assign iconClass = "" />
 				</#if>
 
 				<#if navigationItem.linkText.data != "">
